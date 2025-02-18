@@ -12,14 +12,9 @@ from folium import raster_layers
 from os import path
 import webbrowser
 
-#density_x = 30
-#density_y = 30
-
 API_KEY_mapycz = 'bftGuxvRZ3I1V3XV_kzotrTLSeA1dDjot_mFQZ25Z9Y'
 
 pl.style.use('ggplot')
-
-#path = "/home/martin/PIXHAWK_logs/00000004.BIN"
 
 print("Welcome in the heatmap generator")
 print("This program will generate a heatmap from the given BIN file")
@@ -40,9 +35,8 @@ print("Now, reading the BIN file, this may take a while, please wait...")
 # ______Pripojeni k BIN souboru______
 mav = mavutil.mavlink_connection(bin_path)
 
-timestamps = []
-lat_raw = []
-lon_raw = []
+lat = []
+lon = []
 sonar_ranges_raw = []
 
 # ______Cteni z BIN souboru______
@@ -52,10 +46,9 @@ while True:
     if msg is None:
         break
     if msg.get_type() == 'DPTH':
-        timestamps.append(msg.TimeUS)
         sonar_ranges_raw.append(msg.Depth)
-        lat_raw.append(msg.Lat)
-        lon_raw.append(msg.Lng)
+        lat.append(msg.Lat)
+        lon.append(msg.Lng)
 
 print("The BIN file has been read, now processing the data and generating the heatmap...")
 
@@ -73,13 +66,6 @@ fig, ax = pl.subplots()
 ax.stairs(sonar_ranges_raw)
 pl.show()
 pl.close(fig)
-
-
-# ______Vyrez______(Pouze pro beta)
-
-lat = lat_raw[12000:36000]
-lon = lon_raw[12000:36000]
-sonar_ranges_raw = sonar_ranges_raw[12000:36000]
 
 
 # ______Medianova filtrace______
@@ -138,7 +124,7 @@ for i in range(len(x)):
     y_ = int(y[i] * (density_y - 1) / y_max)
     heat_map_members[y_][x_].append(sonar_ranges[i])
 
-# Prumerovani pomoci traverzovani pres 3D pole - vypocet prumeru 3 dimenze - vysledkem je 2D pole
+# Prumerovani pomoci traverzovani pres 3D pole - vypocet prumeru 3. dimenze - vysledkem je 2D pole
 for i in range(density_y):
     for j in range(density_x):
         if len(heat_map_members[i][j]) > 0:
