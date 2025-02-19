@@ -12,7 +12,10 @@ from folium import raster_layers
 from os import path
 import webbrowser
 
+# !!!DELETE IN RELEASE!!! /home/martin/PIXHAWK_logs/00000004.BIN
+
 API_KEY_mapycz = 'bftGuxvRZ3I1V3XV_kzotrTLSeA1dDjot_mFQZ25Z9Y'
+API_KEY_mapbox = 'pk.eyJ1IjoibWFydGluc3RpZWJlcjEiLCJhIjoiY203OHU4dmNoMDBhejJpcXljdWNoeWNpYSJ9.DxWCzpsSUlzFRI2CPLLUZA'
 
 pl.style.use('ggplot')
 
@@ -32,12 +35,15 @@ print("\n--------------------------------------------------\n")
 
 print("Now, reading the BIN file, this may take a while, please wait...")
 
+
 # ______Pripojeni k BIN souboru______
+
 mav = mavutil.mavlink_connection(bin_path)
 
 lat = []
 lon = []
 sonar_ranges_raw = []
+
 
 # ______Cteni z BIN souboru______
 
@@ -55,9 +61,9 @@ print("The BIN file has been read, now processing the data and generating the he
 
 # ______Orez velkych hodnot______
 
-for i in range(len(sonar_ranges_raw)):
-    if sonar_ranges_raw[i] > 5:
-        sonar_ranges_raw[i] = 5
+#for i in range(len(sonar_ranges_raw)):
+#    if sonar_ranges_raw[i] > 5:
+#        sonar_ranges_raw[i] = 5
 
 
 # ______Vykresleni hloubky v case______
@@ -136,7 +142,6 @@ for i in range(density_y):
 # ______Vykresleni heatmapy______
 
 fig, ax = pl.subplots()
-#mask = np.array(heat_map_members) == 0 # maskovani nulovych hodnot
 sns.heatmap(heat_map_members, cmap='hot', ax=ax, cbar=False, xticklabels=False, yticklabels=False)
 ax.axis('off')
 ax.invert_yaxis()
@@ -145,13 +150,13 @@ pl.show()
 pl.close(fig)
 
 #legenda
-fig, ax = pl.subplots(figsize=(2, 6))
+fig, ax = pl.subplots(figsize=(3, 7))
 norm = pl.Normalize(min(sonar_ranges), max(sonar_ranges))
 sm = pl.cm.ScalarMappable(cmap='hot', norm=norm)
 sm.set_array([])
-fig.colorbar(sm, ax=ax)
+fig.colorbar(sm, ax=ax).ax.tick_params(colors='white', labelsize=12)
 pl.axis('off')
-pl.savefig('legend.png', pad_inches=0)
+pl.savefig('legend.png', pad_inches=0, transparent=True)
 pl.close(fig)
 
 print("The heatmap has been generated and saved as heatmap.png, now generating the map...")
@@ -163,18 +168,26 @@ print("The heatmap has been generated and saved as heatmap.png, now generating t
 m = folium.Map(location=[((lat_min + lat_max) / 2), ((lon_min + lon_max) / 2)], zoom_start=20, tiles=None)
 
 # Podklad Mapbox
-folium.TileLayer(f'https://api.mapbox.com/styles/v1/mapbox/satellite-v9/tiles/{{z}}/{{x}}/{{y}}?access_token=pk.eyJ1IjoibWFydGluc3RpZWJlcjEiLCJhIjoiY203OHU4dmNoMDBhejJpcXljdWNoeWNpYSJ9.DxWCzpsSUlzFRI2CPLLUZA',
-                 attr='Mapbox', name='Satellite', max_zoom=22).add_to(m)
+mapbox = folium.TileLayer(f'https://api.mapbox.com/styles/v1/mapbox/satellite-v9/tiles/{{z}}/{{x}}/{{y}}?access_token={API_KEY_mapbox}',
+                 attr='© <a href="https://www.mapbox.com/about/maps">Mapbox</a> © <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a> <strong><a href="https://apps.mapbox.com/feedback/" target="_blank">Improve this map</a></strong>',
+                          name='Mapbox', max_zoom=22).add_to(m)
 
 # Podklad Mapy.cz
-folium.TileLayer(f'https://api.mapy.cz/v1/maptiles/aerial/256/{{z}}/{{x}}/{{y}}?apikey={API_KEY_mapycz}',
-                 attr='<a href="https://api.mapy.cz/copyright" target="_blank">&copy; Seznam.cz a.s. a další</a>', max_zoom=20).add_to(m)
+mapycz = folium.TileLayer(f'https://api.mapy.cz/v1/maptiles/aerial/256/{{z}}/{{x}}/{{y}}?apikey={API_KEY_mapycz}',
+                 attr='<a href="https://api.mapy.cz/copyright" target="_blank">&copy; Seznam.cz a.s. a další</a>',
+                          name='Mapy.cz', max_zoom=20).add_to(m)
 
 # Heatmapa
 raster_layers.ImageOverlay(name='Heatmap', image='heatmap.png', bounds=[[lat_min, lon_min], [lat_max, lon_max]], opacity=0.5).add_to(m)
 
 # Legenda
-float_image.FloatImage('legend.png', bottom=10, left=90).add_to(m)
+float_image.FloatImage('legend.png', bottom=10, left=85).add_to(m)
+
+# Vodoznak Mapbox
+float_image.FloatImage('./logos/mapbox-logo-white.png', bottom=7, left=3).add_to(mapbox)
+
+# Vodoznak Mapy.cz
+float_image.FloatImage('./logos/mapy-cz-logo-mapovy-podklad-rgb.png', bottom=3, left=3).add_to(mapycz)
 
 # Pridani volby vrstev
 folium.LayerControl().add_to(m)
