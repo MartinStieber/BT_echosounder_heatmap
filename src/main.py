@@ -254,10 +254,12 @@ raster_layers.ImageOverlay(name='Heatmap', image=os.path.join(output_dir, 'heatm
 
 
 # Legenda
-float_image.FloatImage('legend.png', bottom=12, left=3).add_to(m)
+legend_path = str(resource_path(os.path.join(output_dir, 'legend.png')))
+float_image.FloatImage(legend_path, bottom=12, left=3).add_to(m)
 
-mapbox_logo_path = str(resource_path('logos/mapbox-logo-white.png'))
-mapycz_logo_path = str(resource_path('logos/mapy-cz-logo-mapovy-podklad-rgb.png'))
+mapbox_logo_path = str(resource_path(os.path.join('logos', 'mapbox-logo-white.png')))
+print(mapbox_logo_path)
+mapycz_logo_path = str(resource_path(os.path.join('logos', 'mapycz-logo-mapovy-podklad-rgb.png')))
 
 # Vodoznak Mapbox
 float_image.FloatImage(mapbox_logo_path, bottom=9, left=3).add_to(mapbox)
@@ -273,5 +275,5 @@ m.save(os.path.join(output_dir, 'heatmap.html'))
 print("The map has been generated and saved as heatmap.html, now opening the map in the web browser...")
 
 # Otevreni mapy v prohlizeci
-file_path = path.abspath(os.path.join(output_dir, 'heatmap.html'))
+file_path = resource_path(os.path.join(output_dir, 'heatmap.html'))
 webbrowser.open(f'file://{file_path}')
