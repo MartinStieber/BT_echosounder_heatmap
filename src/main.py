@@ -15,8 +15,6 @@ import webbrowser
 from tqdm import tqdm
 import sys
 
-# !!!DELETE IN RELEASE!!! /home/martin/PIXHAWK_logs/00000023.BIN
-
 def resource_path(relative_path):
     """ Get absolute path to resource, works for dev and for PyInstaller """
     base_path = getattr(sys, '_MEIPASS', path.dirname(path.abspath(__file__)))
@@ -168,10 +166,19 @@ y_range = str(round(max(y) - min(y), 2)) + " m"
 print("\n--------------------------------------------------\n")
 print(f"The working area is \033[1;31m{x_range}\033[0m wide in x-axis and \033[1;31m{y_range}\033[0m long in y-axis.")
 while True:
-    density_x = int(input("Please, enter the desired density (number of cells) of the heatmap in x-axis"
-                          " and press Enter to continue: "))
-    density_y = int(input("Please, enter the desired density (number of cells) of the heatmap in y-axis"
-                          " and press Enter to continue: "))
+    try:
+        density_x = int(input("\nPlease, enter the desired density (number of cells) of the heatmap in x-axis"
+                              " and press Enter to continue: "))
+        density_y = int(input("Please, enter the desired density (number of cells) of the heatmap in y-axis"
+                              " and press Enter to continue: "))
+    except ValueError:
+        print("Invalid input. Please enter a valid number.")
+        continue
+
+    if density_x <= 0 or density_y <= 0:
+        print("Invalid input. Please enter a number greater than zero.")
+        continue
+
     x_cell_range = str(round((max(x) - min(x)) / density_x, 2)) + " m"
     y_cell_range = str(round((max(y) - min(y)) / density_y, 2)) + " m"
     print(f"\nBased on your input, one cell of the heatmap will be \033[34m{x_cell_range}\033[0m wide in x-axis "
@@ -254,12 +261,10 @@ raster_layers.ImageOverlay(name='Heatmap', image=os.path.join(output_dir, 'heatm
 
 
 # Legenda
-legend_path = str(resource_path(os.path.join(output_dir, 'legend.png')))
-float_image.FloatImage(legend_path, bottom=12, left=3).add_to(m)
+float_image.FloatImage('legend.png', bottom=12, left=3).add_to(m)
 
-mapbox_logo_path = str(resource_path(os.path.join('logos', 'mapbox-logo-white.png')))
-print(mapbox_logo_path)
-mapycz_logo_path = str(resource_path(os.path.join('logos', 'mapycz-logo-mapovy-podklad-rgb.png')))
+mapbox_logo_path = str(resource_path('logos/mapbox-logo-white.png'))
+mapycz_logo_path = str(resource_path('logos/mapy-cz-logo-mapovy-podklad-rgb.png'))
 
 # Vodoznak Mapbox
 float_image.FloatImage(mapbox_logo_path, bottom=9, left=3).add_to(mapbox)
@@ -275,5 +280,5 @@ m.save(os.path.join(output_dir, 'heatmap.html'))
 print("The map has been generated and saved as heatmap.html, now opening the map in the web browser...")
 
 # Otevreni mapy v prohlizeci
-file_path = resource_path(os.path.join(output_dir, 'heatmap.html'))
+file_path = path.abspath(os.path.join(output_dir, 'heatmap.html'))
 webbrowser.open(f'file://{file_path}')
