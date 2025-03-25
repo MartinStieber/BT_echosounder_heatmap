@@ -16,7 +16,6 @@ from tqdm import tqdm
 import sys
 
 def resource_path(relative_path):
-    """ Get absolute path to resource, works for dev and for PyInstaller """
     base_path = getattr(sys, '_MEIPASS', path.dirname(path.abspath(__file__)))
     return path.join(base_path, relative_path)
 
@@ -259,18 +258,8 @@ mapycz = folium.TileLayer(f'https://api.mapy.cz/v1/maptiles/aerial/256/{{z}}/{{x
 # Heatmapa
 raster_layers.ImageOverlay(name='Heatmap', image=os.path.join(output_dir, 'heatmap.png'), bounds=[[lat_min, lon_min], [lat_max, lon_max]], opacity=0.5).add_to(m)
 
-
 # Legenda
 float_image.FloatImage('legend.png', bottom=12, left=3).add_to(m)
-
-mapbox_logo_path = str(resource_path('logos/mapbox-logo-white.png'))
-mapycz_logo_path = str(resource_path('logos/mapy-cz-logo-mapovy-podklad-rgb.png'))
-
-# Vodoznak Mapbox
-float_image.FloatImage(mapbox_logo_path, bottom=9, left=3).add_to(mapbox)
-
-# Vodoznak Mapy.cz
-float_image.FloatImage(mapycz_logo_path, bottom=5, left=3).add_to(mapycz)
 
 # Pridani volby vrstev
 folium.LayerControl().add_to(m)
