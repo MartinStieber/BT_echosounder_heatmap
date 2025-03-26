@@ -15,10 +15,7 @@ import webbrowser
 from tqdm import tqdm
 import sys
 
-# !!!DELETE IN RELEASE!!! /home/martin/PIXHAWK_logs/00000023.BIN
-
 def resource_path(relative_path):
-    """ Get absolute path to resource, works for dev and for PyInstaller """
     base_path = getattr(sys, '_MEIPASS', path.dirname(path.abspath(__file__)))
     return path.join(base_path, relative_path)
 
@@ -26,18 +23,18 @@ def gradient_filter(data, threshold=1.8):
     data = np.array(data, dtype=np.float64)
     filtered_data = np.copy(data)
 
-    # Výpočet absolutní změny mezi sousedními hodnotami
+    # Calculate absolute change between neighboring values
     diffs = np.abs(np.diff(data, prepend=data[0]))
 
     for i in range(1, len(data)):
-        if diffs[i] > threshold:  # Pokud je skok příliš velký
+        if diffs[i] > threshold:
             filtered_data[i] = 0
 
-    # Výpočet absolutní změny mezi sousedními hodnotami zprava doleva
+    # Calculate absolute change between neighboring values from right to left
     diffs_reverse = np.abs(np.diff(data[::-1], prepend=data[-1]))
 
     for i in range(1, len(data)):
-        if diffs_reverse[i] > threshold:  # Pokud je skok příliš velký
+        if diffs_reverse[i] > threshold:
             filtered_data[-(i+1)] = 0
 
     return filtered_data.tolist()
@@ -49,7 +46,7 @@ API_KEY_mapbox = 'pk.eyJ1IjoibWFydGluc3RpZWJlcjEiLCJhIjoiY203OHU4dmNoMDBhejJpcXl
 
 pl.style.use('ggplot')
 
-print("Welcome in the heatmap generator")
+print("Welcome to the heatmap generator")
 print("This program will generate a heatmap from the given BIN file")
 
 while True:
@@ -61,7 +58,7 @@ while True:
 print("\n--------------------------------------------------\n")
 
 
-# ______Pripojeni k BIN souboru______
+# ______Connect to BIN file______
 
 mav = mavutil.mavlink_connection(bin_path)
 
@@ -70,7 +67,7 @@ lon = []
 sonar_ranges_raw = []
 
 
-# ______Cteni z BIN souboru______
+# ______Read from BIN file______
 
 file_size = path.getsize(bin_path) / 1000000
 
@@ -100,7 +97,7 @@ pbar.close()
 print("\n\nThe BIN file has been read, now processing the data...")
 
 
-# ______Vykresleni hloubky v case______
+# ______Vykresleni hloubky v case______ DELETE IN RELEASE
 
 fig, ax = pl.subplots()
 ax.stairs(sonar_ranges_raw)
@@ -116,12 +113,12 @@ for _ in range(70):
     sonar_ranges = gradient_filter(sonar_ranges)
 
 
-# ______Medianova filtrace______
+# ______Median filter______
 
 sonar_ranges = np.array(median_filter(sonar_ranges, size=15)).tolist()
 
 
-# ______Vykresleni hloubky v case po medianove filtraci______
+# ______Vykresleni hloubky v case po medianove filtraci______ DELETE IN RELEASE
 
 fig, ax = pl.subplots()
 ax.stairs(sonar_ranges)
@@ -129,7 +126,7 @@ pl.show()
 pl.close(fig)
 
 
-# ______Vycteni minimalni a maximalni hodnoty zemepisnych souradnic______
+# ______Get min and max geographic coordinates______
 
 lat_min = min(lat)
 lon_min = min(lon)
@@ -141,7 +138,7 @@ y = []
 h = []
 
 
-# ______Prevod na lokalni souradnice______
+# ______Convert to local coordinates______
 
 for i in range(len(lat)):
     (x_, y_, h_) = pm.geodetic2enu(lat[i], lon[i], 480, lat_min, lon_min, 480)
@@ -150,7 +147,7 @@ for i in range(len(lat)):
     h.append(h_)
 
 
-# ______Vykresleni trasy (lokalnich souradnic)______
+# ______Vykresleni trasy (lokalnich souradnic)______ DELETE IN RELEASE
 
 fig, ax = pl.subplots()
 ax.plot(x, y)
@@ -161,17 +158,26 @@ x_max = max(x)
 y_max = max(y)
 
 
-# ______Interakce s uzivatelem ohledne velikosti jedne bunky______
+# ______Interaction with user for cell size______
 
 x_range = str(round(max(x) - min(x), 2)) + " m"
 y_range = str(round(max(y) - min(y), 2)) + " m"
 print("\n--------------------------------------------------\n")
 print(f"The working area is \033[1;31m{x_range}\033[0m wide in x-axis and \033[1;31m{y_range}\033[0m long in y-axis.")
 while True:
-    density_x = int(input("Please, enter the desired density (number of cells) of the heatmap in x-axis"
-                          " and press Enter to continue: "))
-    density_y = int(input("Please, enter the desired density (number of cells) of the heatmap in y-axis"
-                          " and press Enter to continue: "))
+    try:
+        density_x = int(input("\nPlease, enter the desired density (number of cells) of the heatmap in x-axis"
+                              " and press Enter to continue: "))
+        density_y = int(input("Please, enter the desired density (number of cells) of the heatmap in y-axis"
+                              " and press Enter to continue: "))
+    except ValueError:
+        print("Invalid input. Please enter a valid number.")
+        continue
+
+    if density_x <= 0 or density_y <= 0:
+        print("Invalid input. Please enter a number greater than zero.")
+        continue
+
     x_cell_range = str(round((max(x) - min(x)) / density_x, 2)) + " m"
     y_cell_range = str(round((max(y) - min(y)) / density_y, 2)) + " m"
     print(f"\nBased on your input, one cell of the heatmap will be \033[34m{x_cell_range}\033[0m wide in x-axis "
@@ -182,18 +188,19 @@ while True:
 print("\n--------------------------------------------------\n")
 print("Thank you for the input, now generating the heatmap...")
 
-# ______Vlozeni hodnot hloubky na korespondujici umisteni ve 3D poli a prumerovani na 2D pole______
 
-# Definice 3D pole
+# ______Insert depth values into corresponding positions in 3D array and average to 2D array______
+
+# 3D field
 heat_map_members = [[[] for _ in range(density_x)] for _ in range(density_y)]
 
-# Vlozeni hodnot
+# Values insertion
 for i in range(len(x)):
     x_ = int(x[i] * (density_x - 1) / x_max)
     y_ = int(y[i] * (density_y - 1) / y_max)
     heat_map_members[y_][x_].append(sonar_ranges[i])
 
-# Prumerovani pomoci traverzovani pres 3D pole - vypocet prumeru 3. dimenze - vysledkem je 2D pole
+# Traversing through 3D array - calculating the average of the 3rd dimension - the result is a 2D array
 for i in range(density_y):
     for j in range(density_x):
         if len(heat_map_members[i][j]) > 0:
@@ -202,13 +209,13 @@ for i in range(density_y):
             heat_map_members[i][j] = 0
 
 
-# ______Vystupni slozka______
+# ______Output directory______
 
 output_dir = 'output'
 os.makedirs(output_dir, exist_ok=True)
 
 
-# ______Vykresleni heatmapy______
+# ______Plot heatmap______
 
 fig, ax = pl.subplots()
 sns.heatmap(heat_map_members, cmap='hot', ax=ax, cbar=False, xticklabels=False, yticklabels=False)
@@ -218,7 +225,7 @@ pl.savefig(os.path.join(output_dir, 'heatmap.png'), bbox_inches='tight', pad_inc
 pl.show()
 pl.close(fig)
 
-#legenda
+# Legend
 fig, ax = pl.subplots(figsize=(3, 5))
 norm = pl.Normalize(min(sonar_ranges), max(sonar_ranges))
 sm = pl.cm.ScalarMappable(cmap='hot', norm=norm)
@@ -234,44 +241,34 @@ pl.close(fig)
 print("The heatmap has been generated and saved as heatmap.png, now generating the map...")
 
 
-# ______Vykresleni heatmapy na mape______
+# ______Plot heatmap on map______
 
-# Hlavni mapa
+# Main map
 m = folium.Map(location=[((lat_min + lat_max) / 2), ((lon_min + lon_max) / 2)], zoom_start=20, tiles=None, control_scale=True)
 
-# Podklad Mapbox
+# Mapbox layer
 mapbox = folium.TileLayer(f'https://api.mapbox.com/styles/v1/mapbox/satellite-v9/tiles/{{z}}/{{x}}/{{y}}?access_token={API_KEY_mapbox}',
                  attr='© <a href="https://www.mapbox.com/about/maps">Mapbox</a> © <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a> <strong><a href="https://apps.mapbox.com/feedback/" target="_blank">Improve this map</a></strong>',
                           name='Mapbox', max_zoom=22).add_to(m)
 
-# Podklad Mapy.cz
+# Mapy.cz layer
 mapycz = folium.TileLayer(f'https://api.mapy.cz/v1/maptiles/aerial/256/{{z}}/{{x}}/{{y}}?apikey={API_KEY_mapycz}',
                  attr='<a href="https://api.mapy.cz/copyright" target="_blank">&copy; Seznam.cz a.s. a další</a>',
                           name='Mapy.cz', max_zoom=20).add_to(m)
 
-# Heatmapa
+# Heatmap layer
 raster_layers.ImageOverlay(name='Heatmap', image=os.path.join(output_dir, 'heatmap.png'), bounds=[[lat_min, lon_min], [lat_max, lon_max]], opacity=0.5).add_to(m)
 
-
-# Legenda
+# Legend layer
 float_image.FloatImage('legend.png', bottom=12, left=3).add_to(m)
 
-mapbox_logo_path = str(resource_path('logos/mapbox-logo-white.png'))
-mapycz_logo_path = str(resource_path('logos/mapy-cz-logo-mapovy-podklad-rgb.png'))
-
-# Vodoznak Mapbox
-float_image.FloatImage(mapbox_logo_path, bottom=9, left=3).add_to(mapbox)
-
-# Vodoznak Mapy.cz
-float_image.FloatImage(mapycz_logo_path, bottom=5, left=3).add_to(mapycz)
-
-# Pridani volby vrstev
+# Add layer control
 folium.LayerControl().add_to(m)
 
-# Ulozeni mapy
+# Save map
 m.save(os.path.join(output_dir, 'heatmap.html'))
 print("The map has been generated and saved as heatmap.html, now opening the map in the web browser...")
 
-# Otevreni mapy v prohlizeci
+# Open map in browser
 file_path = path.abspath(os.path.join(output_dir, 'heatmap.html'))
 webbrowser.open(f'file://{file_path}')
