@@ -13,6 +13,9 @@ import webbrowser
 from tqdm import tqdm
 import sys
 
+API_KEY_mapycz = 'bftGuxvRZ3I1V3XV_kzotrTLSeA1dDjot_mFQZ25Z9Y'
+API_KEY_mapbox = 'pk.eyJ1IjoibWFydGluc3RpZWJlcjEiLCJhIjoiY203OHU4dmNoMDBhejJpcXljdWNoeWNpYSJ9.DxWCzpsSUlzFRI2CPLLUZA'
+
 pl.style.use('ggplot')
 
 def resource_path(relative_path):
@@ -41,8 +44,9 @@ def gradient_filter(data, threshold=1.8):
 
 
 
-API_KEY_mapycz = 'bftGuxvRZ3I1V3XV_kzotrTLSeA1dDjot_mFQZ25Z9Y'
-API_KEY_mapbox = 'pk.eyJ1IjoibWFydGluc3RpZWJlcjEiLCJhIjoiY203OHU4dmNoMDBhejJpcXljdWNoeWNpYSJ9.DxWCzpsSUlzFRI2CPLLUZA'
+# ______!!!_MAIN_CODE_BEGIN_HERE_!!!______
+
+
 
 print("Welcome to the heatmap generator")
 print("This program will generate a heatmap from the given BIN file")
