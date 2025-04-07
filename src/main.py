@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 from pymavlink import mavutil
 import matplotlib.pyplot as pl
 import pymap3d as pm
@@ -14,6 +12,11 @@ import os
 import webbrowser
 from tqdm import tqdm
 import sys
+
+API_KEY_mapycz = 'bftGuxvRZ3I1V3XV_kzotrTLSeA1dDjot_mFQZ25Z9Y'
+API_KEY_mapbox = 'pk.eyJ1IjoibWFydGluc3RpZWJlcjEiLCJhIjoiY203OHU4dmNoMDBhejJpcXljdWNoeWNpYSJ9.DxWCzpsSUlzFRI2CPLLUZA'
+
+pl.style.use('ggplot')
 
 def resource_path(relative_path):
     base_path = getattr(sys, '_MEIPASS', path.dirname(path.abspath(__file__)))
@@ -41,10 +44,9 @@ def gradient_filter(data, threshold=1.8):
 
 
 
-API_KEY_mapycz = 'bftGuxvRZ3I1V3XV_kzotrTLSeA1dDjot_mFQZ25Z9Y'
-API_KEY_mapbox = 'pk.eyJ1IjoibWFydGluc3RpZWJlcjEiLCJhIjoiY203OHU4dmNoMDBhejJpcXljdWNoeWNpYSJ9.DxWCzpsSUlzFRI2CPLLUZA'
+# ______!!!_MAIN_CODE_BEGIN_HERE_!!!______
 
-pl.style.use('ggplot')
+
 
 print("Welcome to the heatmap generator")
 print("This program will generate a heatmap from the given BIN file")
@@ -97,14 +99,6 @@ pbar.close()
 print("\n\nThe BIN file has been read, now processing the data...")
 
 
-# ______Vykresleni hloubky v case______ DELETE IN RELEASE
-
-fig, ax = pl.subplots()
-ax.stairs(sonar_ranges_raw)
-pl.show()
-pl.close(fig)
-
-
 # ______Gradient filter______
 
 sonar_ranges = gradient_filter(sonar_ranges_raw)
@@ -116,14 +110,6 @@ for _ in range(70):
 # ______Median filter______
 
 sonar_ranges = np.array(median_filter(sonar_ranges, size=15)).tolist()
-
-
-# ______Vykresleni hloubky v case po medianove filtraci______ DELETE IN RELEASE
-
-fig, ax = pl.subplots()
-ax.stairs(sonar_ranges)
-pl.show()
-pl.close(fig)
 
 
 # ______Get min and max geographic coordinates______
@@ -147,13 +133,7 @@ for i in range(len(lat)):
     h.append(h_)
 
 
-# ______Vykresleni trasy (lokalnich souradnic)______ DELETE IN RELEASE
-
-fig, ax = pl.subplots()
-ax.plot(x, y)
-pl.show()
-pl.close(fig)
-
+    
 x_max = max(x)
 y_max = max(y)
 
@@ -222,7 +202,6 @@ sns.heatmap(heat_map_members, cmap='hot', ax=ax, cbar=False, xticklabels=False, 
 ax.axis('off')
 ax.invert_yaxis()
 pl.savefig(os.path.join(output_dir, 'heatmap.png'), bbox_inches='tight', pad_inches=0)
-pl.show()
 pl.close(fig)
 
 # Legend
