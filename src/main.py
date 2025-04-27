@@ -48,7 +48,7 @@ def gradient_filter(data, threshold=1.8):
 
 
 
-print("Welcome to the heatmap generator")
+print("Welcome to the \033[3mHeatMap_gen_v2.0\033[0m")
 print("This program will generate a heatmap from the given BIN file")
 
 while True:
